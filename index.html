@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreeVoice AI — Free Text to Speech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #080c14;
+      --bg2: #0d1421;
+      --bg3: #111927;
+      --card: #131e2e;
+      --border: #1e2f47;
+      --accent: #00d4ff;
+      --accent2: #7c3aed;
+      --accent3: #06ffa5;
+      --text: #e8f0fe;
+      --muted: #7b8fa8;
+      --glow: 0 0 40px rgba(0,212,255,0.15);
+    }
+    [data-theme="light"] {
+      --bg: #f0f4ff;
+      --bg2: #e8eeff;
+      --bg3: #dde6ff;
+      --card: #ffffff;
+      --border: #c4d0f0;
+      --accent: #0066cc;
+      --accent2: #6d28d9;
+      --accent3: #059669;
+      --text: #0f172a;
+      --muted: #4b5e7a;
+      --glow: 0 0 40px rgba(0,102,204,0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Background mesh */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 20%, rgba(0,212,255,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 90% 80%, rgba(124,58,237,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 60% at 50% 50%, rgba(6,255,165,0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    /* Typography */
+    h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
+
+    /* Navbar */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,12,20,0.8);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    [data-theme="light"] nav { background: rgba(240,244,255,0.85); }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      box-shadow: 0 0 20px rgba(0,212,255,0.3);
+    }
+    .logo span.gradient-text {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+
+    .nav-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(6,255,165,0.12);
+      color: var(--accent3);
+      border: 1px solid rgba(6,255,165,0.25);
+      letter-spacing: 0.04em;
+    }
+
+    .theme-toggle {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      color: var(--text);
+    }
+    .theme-toggle:hover { border-color: var(--accent); box-shadow: var(--glow); }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 3rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 0.4rem 1rem;
+      border: 1px solid rgba(0,212,255,0.25);
+      border-radius: 100px;
+      background: rgba(0,212,255,0.06);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent) 0%, #a78bfa 50%, var(--accent3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2rem;
+      margin: 0 2rem 3rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* Main layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .sidebar { order: -1; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.75rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(0,212,255,0.2); }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* Textarea */
+    .text-area-wrap { position: relative; }
+    textarea#mainText {
+      width: 100%;
+      min-height: 220px;
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      line-height: 1.7;
+      padding: 1.25rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea#mainText::placeholder { color: var(--muted); }
+    textarea#mainText:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+    }
+
+    .text-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.75rem;
+    }
+    .char-counter {
+      font-size: 0.8rem;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .char-counter.warn { color: #f59e0b; }
+    .char-counter.danger { color: #ef4444; }
+
+    .text-tool-btns { display: flex; gap: 0.5rem; }
+    .tool-btn {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 0.35rem;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover { color: var(--text); border-color: var(--accent); background: rgba(0,212,255,0.06); }
+
+    /* Voice/Lang controls */
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+    @media (max-width: 500px) { .controls-row { grid-template-columns: 1fr; } }
+
+    label.ctrl-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    select {
+      width: 100%;
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      padding: 0.7rem 1rem;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237b8fa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      transition: border-color 0.2s;
+    }
+    select:focus { border-color: var(--accent); }
+
+    /* Generate button */
+    .generate-btn {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem 2rem;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 30px rgba(0,212,255,0.25);
+    }
+    .generate-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    }
+    .generate-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 40px rgba(0,212,255,0.4);
+    }
+    .generate-btn:active:not(:disabled) { transform: translateY(0); }
+    .generate-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    /* Loading spinner */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Audio player */
+    .audio-result {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      animation: slideUp 0.3s ease;
+    }
+    .audio-result.visible { display: block; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .audio-result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .audio-badge {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent3);
+    }
+    .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent3);
+      box-shadow: 0 0 8px var(--accent3);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    audio {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    audio::-webkit-media-controls-panel { background: var(--bg3); }
+
+    .download-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 12px;
+      background: rgba(6,255,165,0.08);
+      border: 1px solid rgba(6,255,165,0.25);
+      color: var(--accent3);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .download-btn:hover { background: rgba(6,255,165,0.15); box-shadow: 0 0 20px rgba(6,255,165,0.15); }
+
+    /* Sidebar */
+    .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* Voice cards */
+    .voice-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .voice-card {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 0.9rem 1rem;
+      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      background: var(--bg2);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .voice-card:hover { border-color: var(--accent); background: rgba(0,212,255,0.04); }
+    .voice-card.active {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.08);
+      box-shadow: 0 0 20px rgba(0,212,255,0.1);
+    }
+
+    .voice-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .voice-avatar.female { background: linear-gradient(135deg, #ec4899, #8b5cf6); }
+    .voice-avatar.male { background: linear-gradient(135deg, #3b82f6, #06b6d4); }
+
+    .voice-info { flex: 1; min-width: 0; }
+    .voice-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .voice-desc { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .preview-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid rgba(0,212,255,0.2);
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .preview-btn:hover { background: rgba(0,212,255,0.2); transform: scale(1.1); }
+
+    /* Language pills */
+    .lang-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .lang-pill {
+      padding: 0.35rem 0.9rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: 1.5px solid var(--border);
+      background: var(--bg2);
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .lang-pill.active {
+      border-color: var(--accent2);
+      background: rgba(124,58,237,0.12);
+      color: #a78bfa;
+    }
+    .lang-pill:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+
+    /* Features section */
+    .features-section {
+      max-width: 1100px;
+      margin: 0 auto 6rem;
+      padding: 0 2rem;
+    }
+    .features-section h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .feature-card {
+      padding: 1.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      transition: all 0.2s;
+    }
+    .feature-card:hover {
+      border-color: rgba(0,212,255,0.25);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .feature-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .feature-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer span { color: var(--accent); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Error state */
+    .error-msg {
+      display: none;
+      padding: 0.85rem 1rem;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 12px;
+      color: #fca5a5;
+      font-size: 0.88rem;
+      margin-top: 1rem;
+    }
+    .error-msg.visible { display: flex; align-items: center; gap: 0.5rem; }
+
+    /* Responsive nav */
+    @media (max-width: 480px) {
+      nav { padding: 1rem; }
+      .nav-badge { display: none; }
+      .hero { padding: 3rem 1.25rem 2rem; }
+      .stats-bar { gap: 1.5rem; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+
+    <!-- Navbar -->
+    <nav>
+      <div class="logo">
+        <div class="logo-icon">🎙️</div>
+        <span class="gradient-text">FreeVoice</span><span style="color:var(--text)"> AI</span>
+      </div>
+      <div class="nav-right">
+        <span class="nav-badge">✦ 100% Free</span>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <span>⚡</span>
+        <span>AI-Powered Text to Speech</span>
+      </div>
+      <h1>Turn Text Into<br /><span class="gradient-text">Natural Speech</span></h1>
+      <p>Generate lifelike voice audio instantly. Multiple languages, multiple voices — completely free, no account needed.</p>
+    </section>
+
+    <!-- Stats -->
+    <div class="stats-bar" style="max-width:1100px;margin:0 auto 2.5rem;">
+      <div class="stat">
+        <div class="stat-num">8+</div>
+        <div class="stat-label">AI Voices</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Languages</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">5K</div>
+        <div class="stat-label">Char Limit</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">Free</div>
+        <div class="stat-label">Always</div>
+      </div>
+    </div>
+
+    <!-- Main app -->
+    <div class="main-grid">
+
+      <!-- Left: TTS Generator -->
+      <div>
+        <div class="card">
+          <div class="card-title">
+            <span class="dot"></span>
+            Text to Speech Generator
+          </div>
+
+          <div class="text-area-wrap">
+            <textarea
+              id="mainText"
+              placeholder="Type or paste your text here... (up to 5,000 characters)"
+              maxlength="5000"
+            ></textarea>
+          </div>
+
+          <div class="text-tools">
+            <span class="char-counter" id="charCounter">0 / 5,000</span>
+            <div class="text-tool-btns">
+              <button class="tool-btn" id="pasteBtn">📋 Paste</button>
+              <button class="tool-btn" id="clearBtn">🗑 Clear</button>
+              <button class="tool-btn" id="copyBtn">📄 Copy</button>
+            </div>
+          </div>
+
+          <div class="controls-row">
+            <div>
+              <label class="ctrl-label" for="voiceSelect">Voice</label>
+              <select id="voiceSelect">
+                <optgroup label="🇬🇧 English">
+                  <option value="aria-female">Aria — Warm & Professional</option>
+                  <option value="james-male">James — Deep & Authoritative</option>
+                  <option value="narrator">Nova — Clear Narrator</option>
+                  <option value="deep-male">Titan — Rich & Deep</option>
+                </optgroup>
+                <optgroup label="🇮🇳 Hindi">
+                  <option value="priya-hindi">Priya — Hindi Female</option>
+                  <option value="arjun-hindi">Arjun — Hindi Male</option>
+                </optgroup>
+                <optgroup label="🇪🇸 Spanish">
+                  <option value="sofia-spanish">Sofia — Spanish Female</option>
+                  <option value="carlos-spanish">Carlos — Spanish Male</option>
+                </optgroup>
+              </select>
+            </div>
+            <div>
+              <label class="ctrl-label" for="speedRange">Speed</label>
+              <select id="speedRange">
+                <option value="0.75">🐢 Slow (0.75x)</option>
+                <option value="1.0" selected>▶ Normal (1x)</option>
+                <option value="1.25">⚡ Fast (1.25x)</option>
+                <option value="1.5">🚀 Very Fast (1.5x)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="error-msg" id="errorMsg">
+            ⚠️ <span id="errorText">Something went wrong.</span>
+          </div>
+
+          <button class="generate-btn" id="generateBtn">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm0 6v8m-4-4h8" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Generate Voice
+          </button>
+
+          <!-- Audio Result -->
+          <div class="audio-result" id="audioResult">
+            <div class="audio-result-header">
+              <div class="audio-badge">
+                <span class="live-dot"></span>
+                Audio Ready
+              </div>
+              <span style="font-size:0.8rem;color:var(--muted)" id="voiceLabel"></span>
+            </div>
+            <audio id="audioPlayer" controls></audio>
+            <a href="#" class="download-btn" id="downloadBtn" download="freevoice-audio">
+              ⬇️ Download Audio
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+
+        <!-- Voice Library -->
+        <div class="card">
+          <div class="card-title">
+            <span class="dot"></span>
+            Voice Library
+          </div>
+          <div class="voice-list" id="voiceLibrary">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Language filter -->
+        <div class="card">
+          <div class="card-title">
+            <span class="dot"></span>
+            Languages
+          </div>
+          <div class="lang-pills">
+            <div class="lang-pill active" data-lang="all">🌍 All</div>
+            <div class="lang-pill" data-lang="en">🇬🇧 English</div>
+            <div class="lang-pill" data-lang="hi">🇮🇳 Hindi</div>
+            <div class="lang-pill" data-lang="es">🇪🇸 Spanish</div>
+          </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card" style="background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(124,58,237,0.06));">
+          <div class="card-title">
+            <span class="dot"></span>
+            Tips for Best Results
+          </div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:0.7rem;">
+            <li style="font-size:0.85rem;color:var(--muted);display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--accent)">→</span> Use punctuation to control pauses and rhythm
+            </li>
+            <li style="font-size:0.85rem;color:var(--muted);display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--accent)">→</span> Shorter texts generate faster audio
+            </li>
+            <li style="font-size:0.85rem;color:var(--muted);display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--accent)">→</span> Match the voice language to your text
+            </li>
+            <li style="font-size:0.85rem;color:var(--muted);display:flex;gap:0.5rem;align-items:flex-start;">
+              <span style="color:var(--accent)">→</span> Try different speeds for podcasts or presentations
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="features-section">
+      <h2 class="syne">Why <span style="background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">FreeVoice AI?</span></h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(0,212,255,0.1)">🎯</div>
+          <h3>Natural Voices</h3>
+          <p>AI-powered voices that sound human and expressive, not robotic.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(124,58,237,0.1)">⚡</div>
+          <h3>Instant Generation</h3>
+          <p>No waiting, no queue. Generate speech in seconds.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(6,255,165,0.1)">🔓</div>
+          <h3>No Login Needed</h3>
+          <p>Jump straight in — no account, no credit card, no limits.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(245,158,11,0.1)">🌍</div>
+          <h3>Multi-Language</h3>
+          <p>English, Hindi, and Spanish voices available instantly.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(239,68,68,0.1)">⬇️</div>
+          <h3>Download Audio</h3>
+          <p>Download your generated audio for offline use anytime.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(16,185,129,0.1)">🛡️</div>
+          <h3>Open Source</h3>
+          <p>Powered by open-source TTS engines. Transparent and trustworthy.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Built with ❤️ using open-source TTS · <span>FreeVoice AI</span> · Completely Free Forever</p>
+    </footer>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_BASE = 'http://localhost:3001/api';
+
+    // Voice data (mirrors backend)
+    const voices = [
+      { id: 'aria-female', name: 'Aria', desc: 'Warm & Professional', gender: 'female', lang: 'en', emoji: 'A' },
+      { id: 'james-male', name: 'James', desc: 'Deep & Authoritative', gender: 'male', lang: 'en', emoji: 'J' },
+      { id: 'narrator', name: 'Nova', desc: 'Clear Narrator', gender: 'female', lang: 'en', emoji: 'N' },
+      { id: 'deep-male', name: 'Titan', desc: 'Rich & Deep', gender: 'male', lang: 'en', emoji: 'T' },
+      { id: 'priya-hindi', name: 'Priya', desc: 'Hindi Female', gender: 'female', lang: 'hi', emoji: 'P' },
+      { id: 'arjun-hindi', name: 'Arjun', desc: 'Hindi Male', gender: 'male', lang: 'hi', emoji: 'A' },
+      { id: 'sofia-spanish', name: 'Sofia', desc: 'Spanish Female', gender: 'female', lang: 'es', emoji: 'S' },
+      { id: 'carlos-spanish', name: 'Carlos', desc: 'Spanish Male', gender: 'male', lang: 'es', emoji: 'C' },
+    ];
+
+    const voiceConfigs = {
+      'aria-female':   { pitch: 1.1, rate: 1.0, lang: 'en-US' },
+      'james-male':    { pitch: 0.85, rate: 0.95, lang: 'en-US' },
+      'narrator':      { pitch: 1.0, rate: 0.9, lang: 'en-US' },
+      'deep-male':     { pitch: 0.75, rate: 0.88, lang: 'en-US' },
+      'priya-hindi':   { pitch: 1.15, rate: 1.0, lang: 'hi-IN' },
+      'arjun-hindi':   { pitch: 0.9, rate: 0.95, lang: 'hi-IN' },
+      'sofia-spanish': { pitch: 1.1, rate: 1.05, lang: 'es-ES' },
+      'carlos-spanish':{ pitch: 0.88, rate: 0.98, lang: 'es-ES' },
+    };
+
+    // Theme
+    const themeBtn = document.getElementById('themeToggle');
+    themeBtn.addEventListener('click', () => {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      themeBtn.textContent = isDark ? '🌙' : '☀️';
+    });
+
+    // Char counter
+    const textarea = document.getElementById('mainText');
+    const counter = document.getElementById('charCounter');
+    textarea.addEventListener('input', () => {
+      const len = textarea.value.length;
+      counter.textContent = `${len.toLocaleString()} / 5,000`;
+      counter.className = 'char-counter' + (len > 4500 ? ' danger' : len > 4000 ? ' warn' : '');
+    });
+
+    // Tool buttons
+    document.getElementById('pasteBtn').addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        textarea.value = text.substring(0, 5000);
+        textarea.dispatchEvent(new Event('input'));
+        showToast('✅ Text pasted!');
+      } catch { showToast('❌ Clipboard access denied'); }
+    });
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      textarea.value = '';
+      textarea.dispatchEvent(new Event('input'));
+      showToast('🗑 Text cleared');
+    });
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      if (!textarea.value) { showToast('⚠️ Nothing to copy'); return; }
+      navigator.clipboard.writeText(textarea.value).then(() => showToast('📄 Copied!'));
+    });
+
+    // Build voice library
+    function buildVoiceLibrary(filter = 'all') {
+      const lib = document.getElementById('voiceLibrary');
+      const filtered = filter === 'all' ? voices : voices.filter(v => v.lang === filter);
+      lib.innerHTML = filtered.map(v => `
+        <div class="voice-card ${document.getElementById('voiceSelect').value === v.id ? 'active' : ''}"
+             data-id="${v.id}" onclick="selectVoice('${v.id}')">
+          <div class="voice-avatar ${v.gender}">${v.emoji}</div>
+          <div class="voice-info">
+            <div class="voice-name">${v.name}</div>
+            <div class="voice-desc">${v.desc} · ${v.lang.toUpperCase()}</div>
+          </div>
+          <button class="preview-btn" onclick="event.stopPropagation(); previewVoice('${v.id}', '${v.name}')" title="Preview">▶</button>
+        </div>`).join('');
+    }
+    buildVoiceLibrary();
+
+    function selectVoice(id) {
+      document.getElementById('voiceSelect').value = id;
+      document.querySelectorAll('.voice-card').forEach(c => {
+        c.classList.toggle('active', c.dataset.id === id);
+      });
+    }
+
+    document.getElementById('voiceSelect').addEventListener('change', e => {
+      document.querySelectorAll('.voice-card').forEach(c => {
+        c.classList.toggle('active', c.dataset.id === e.target.value);
+      });
+    });
+
+    // Language filter
+    document.querySelectorAll('.lang-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.lang-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        buildVoiceLibrary(pill.dataset.lang);
+      });
+    });
+
+    // Preview voice via browser TTS
+    function previewVoice(voiceId, name) {
+      const config = voiceConfigs[voiceId];
+      const sample = `Hi, I'm ${name}. I'm your AI voice assistant.`;
+      speakBrowser(sample, config);
+      showToast(`🎙️ Previewing ${name}...`);
+    }
+
+    function speakBrowser(text, config) {
+      if (!window.speechSynthesis) return;
+      speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.pitch = config.pitch;
+      utter.rate = config.rate;
+      utter.lang = config.lang;
+      // Try to match a voice
+      const sysvs = speechSynthesis.getVoices();
+      const match = sysvs.find(v => v.lang.startsWith(config.lang.split('-')[0]));
+      if (match) utter.voice = match;
+      speechSynthesis.speak(utter);
+    }
+
+    // Generate button
+    let currentAudioUrl = null;
+    let currentFileId = null;
+
+    document.getElementById('generateBtn').addEventListener('click', generateVoice);
+
+    async function generateVoice() {
+      const text = textarea.value.trim();
+      const voiceId = document.getElementById('voiceSelect').value;
+      const speed = parseFloat(document.getElementById('speedRange').value);
+
+      hideError();
+
+      if (!text) { showError('Please enter some text first.'); return; }
+      if (text.length > 5000) { showError('Text exceeds the 5,000 character limit.'); return; }
+
+      setLoading(true);
+
+      try {
+        // Try backend first
+        const res = await fetch(`${API_BASE}/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice_id: voiceId, language: voiceId })
+        });
+
+        const data = await res.json();
+
+        if (data.use_browser_tts || !data.audio_url) {
+          // Fallback to browser TTS and create blob
+          await generateBrowserTTS(text, voiceId, speed);
+        } else {
+          const fullUrl = `http://localhost:3001${data.audio_url}`;
+          showAudioResult(fullUrl, data.file_id, data.voice || voiceId);
+        }
+      } catch (err) {
+        // Backend unavailable — use browser TTS fallback
+        await generateBrowserTTS(text, voiceId, speed);
+      }
+
+      setLoading(false);
+    }
+
+    async function generateBrowserTTS(text, voiceId, speed = 1.0) {
+      const config = voiceConfigs[voiceId] || voiceConfigs['aria-female'];
+      const voiceName = voices.find(v => v.id === voiceId)?.name || 'AI Voice';
+
+      // Use browser TTS for playback
+      if (window.speechSynthesis) {
+        speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.pitch = config.pitch;
+        utter.rate = config.rate * speed;
+        utter.lang = config.lang;
+        const sysvs = speechSynthesis.getVoices();
+        const match = sysvs.find(v => v.lang.startsWith(config.lang.split('-')[0]));
+        if (match) utter.voice = match;
+
+        // Show audio result with browser TTS info
+        showBrowserTTSResult(voiceName, utter, text, voiceId, speed);
+      }
+    }
+
+    function showBrowserTTSResult(voiceName, utter, text, voiceId, speed) {
+      const result = document.getElementById('audioResult');
+      const player = document.getElementById('audioPlayer');
+      const dlBtn = document.getElementById('downloadBtn');
+      const label = document.getElementById('voiceLabel');
+
+      label.textContent = `🎙️ ${voiceName} · Browser TTS`;
+
+      // Replace audio element with a play button for browser TTS
+      player.style.display = 'none';
+
+      // Check if custom player exists
+      let customPlayer = document.getElementById('browserTTSPlayer');
+      if (!customPlayer) {
+        customPlayer = document.createElement('div');
+        customPlayer.id = 'browserTTSPlayer';
+        customPlayer.style.cssText = 'display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;';
+        player.parentNode.insertBefore(customPlayer, player);
+      }
+
+      customPlayer.innerHTML = `
+        <button onclick="playSpeech()" style="
+          padding:0.7rem 1.5rem;border-radius:12px;border:none;cursor:pointer;
+          background:linear-gradient(135deg,var(--accent),var(--accent2));
+          color:white;font-weight:700;font-family:'Syne',sans-serif;font-size:0.9rem;
+          display:flex;align-items:center;gap:0.5rem;flex:1;justify-content:center;
+          transition:transform 0.15s;">▶ Play Voice</button>
+        <button onclick="stopSpeech()" style="
+          padding:0.7rem 1rem;border-radius:12px;border:1.5px solid var(--border);
+          background:transparent;color:var(--muted);cursor:pointer;font-size:0.9rem;
+          transition:all 0.2s;">⏹ Stop</button>`;
+
+      window._currentTTSUtter = utter;
+      window._currentTTSText = text;
+      window._currentTTSConfig = voiceConfigs[voiceId];
+      window._currentTTSSpeed = speed;
+
+      dlBtn.href = '#';
+      dlBtn.textContent = '⬇️ Download (MP3 — needs backend)';
+      dlBtn.onclick = (e) => {
+        e.preventDefault();
+        showToast('💡 Start the backend server for audio downloads!');
+      };
+
+      result.classList.add('visible');
+      showToast(`✅ Voice generated with ${voiceName}!`);
+    }
+
+    window.playSpeech = function() {
+      if (!window._currentTTSUtter) return;
+      speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(window._currentTTSText);
+      Object.assign(utter, {
+        pitch: window._currentTTSConfig.pitch,
+        rate: window._currentTTSConfig.rate * (window._currentTTSSpeed || 1),
+        lang: window._currentTTSConfig.lang
+      });
+      const sysvs = speechSynthesis.getVoices();
+      const match = sysvs.find(v => v.lang.startsWith(window._currentTTSConfig.lang.split('-')[0]));
+      if (match) utter.voice = match;
+      speechSynthesis.speak(utter);
+    };
+    window.stopSpeech = function() { speechSynthesis.cancel(); };
+
+    function showAudioResult(url, fileId, voiceName) {
+      const result = document.getElementById('audioResult');
+      const player = document.getElementById('audioPlayer');
+      const dlBtn = document.getElementById('downloadBtn');
+      const label = document.getElementById('voiceLabel');
+
+      player.style.display = '';
+      const existing = document.getElementById('browserTTSPlayer');
+      if (existing) existing.remove();
+
+      player.src = url;
+      label.textContent = `🎙️ ${voiceName}`;
+
+      if (fileId) {
+        dlBtn.href = `${API_BASE}/download/${fileId}`;
+        dlBtn.setAttribute('download', 'freevoice-audio.wav');
+        dlBtn.onclick = null;
+        dlBtn.textContent = '⬇️ Download Audio';
+      }
+
+      result.classList.add('visible');
+      showToast(`✅ Voice generated!`);
+      player.play();
+    }
+
+    function setLoading(on) {
+      const btn = document.getElementById('generateBtn');
+      btn.disabled = on;
+      btn.innerHTML = on
+        ? '<div class="spinner"></div> Generating...'
+        : '<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm0 6v8m-4-4h8" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Generate Voice';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      document.getElementById('errorText').textContent = msg;
+      el.classList.add('visible');
+    }
+    function hideError() { document.getElementById('errorMsg').classList.remove('visible'); }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Load voices on init
+    if (window.speechSynthesis) {
+      speechSynthesis.onvoiceschanged = () => {};
+      speechSynthesis.getVoices();
+    }
+  </script>
+</body>
+</html>
